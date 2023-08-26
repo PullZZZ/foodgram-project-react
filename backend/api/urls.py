@@ -4,8 +4,8 @@ from .views import UserViewSet
 
 app_name = 'api'
 
-router = routers.DefaultRouter()
-router.register('users', UserViewSet)
+# router = routers.DefaultRouter()
+# router.register('users', UserViewSet)
 
 # urlpatterns = [
 #     path('', include(router.urls)),

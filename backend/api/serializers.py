@@ -22,7 +22,8 @@ class UserSerializer(DjoserUserSerializer):
 
     def get_is_subscribed(self, user):
         current_user = self.context['request'].user
-        return current_user.is_authenticated and user.subscribed.filter(subscriber=current_user).exists()
+        return (current_user.is_authenticated
+                and user.subscribed.filter(subscriber=current_user).exists())
 
 
 class UserCreateSerializer(DjoserUserCreateSerializer):
@@ -37,5 +38,3 @@ class UserCreateSerializer(DjoserUserCreateSerializer):
             'last_name',
         )
         read_only_fields = ('id', )
-
-
