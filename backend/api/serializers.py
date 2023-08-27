@@ -3,7 +3,8 @@ from djoser.serializers import (
     UserCreateSerializer as DjoserUserCreateSerializer
 )
 from rest_framework import serializers
-from recipes.models import User
+from users.models import User
+from recipes.models import Tag
 
 
 class UserSerializer(DjoserUserSerializer):
@@ -14,7 +15,6 @@ class UserSerializer(DjoserUserSerializer):
             'email',
             'id',
             'username',
-            'password',
             'first_name',
             'last_name',
             'is_subscribed'
@@ -38,3 +38,11 @@ class UserCreateSerializer(DjoserUserCreateSerializer):
             'last_name',
         )
         read_only_fields = ('id', )
+
+
+class TagSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Tag
+        slug_field = 'slug'
+        fields = '__all__'

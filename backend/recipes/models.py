@@ -1,10 +1,7 @@
-from django.contrib.auth import get_user_model
+from colorfield.fields import ColorField
 from django.db import models
-
-
-User = get_user_model()
-MODEL_NAME_MAX_LEN = 200
-User._meta.get_field('email')._unique = True
+from foodgram.settings import MODEL_NAME_MAX_LEN
+from users.models import User
 
 
 class Recipe (models.Model):
@@ -77,10 +74,7 @@ class Tag(models.Model):
         max_length=MODEL_NAME_MAX_LEN,
         db_index=True,
     )
-    color = models.CharField(
-        max_length=7,
-        null=True
-    )
+    color = ColorField(default='#FF0000')
     slug = models.SlugField(
         verbose_name='Slug категории',
         max_length=MODEL_NAME_MAX_LEN,
@@ -113,26 +107,3 @@ class ShopingCartIngredient(models.Model):
         on_delete=models.CASCADE
     )
     amount = models.IntegerField()
-
-
-class Subscribe(models.Model):
-    subscriber = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='subscriber'
-    )
-    subscribed = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='subscribed'
-    )
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['subscriber', 'subscribed'],
-                                    name='unique_subscribe'),
-            models.CheckConstraint(
-                check=~models.Q(subscriber=models.F('subscribed')),
-                name='self_subscribe'
-            )
-        ]
