@@ -24,13 +24,13 @@ class Recipe (models.Model):
     cooking_time = models.IntegerField(
         verbose_name='Время приготовления (в минутах)'
     )
-    ingredient = models.ManyToManyField(
+    ingredients = models.ManyToManyField(
         'Ingredient',
         through='RecipeIngredient',
         verbose_name='Список ингредиентов',
         related_name='recipes'
     )
-    tag = models.ManyToManyField(
+    tags = models.ManyToManyField(
         'Tag',
         verbose_name='Теги',
         related_name='recipes'
@@ -38,6 +38,7 @@ class Recipe (models.Model):
 
     class Meta:
         verbose_name = 'Рецепт'
+        verbose_name_plural = 'Рецепты'
         ordering = ('name', )
 
     def __str__(self):
@@ -45,7 +46,7 @@ class Recipe (models.Model):
 
 
 class RecipeIngredient(models.Model):
-    cart = models.ForeignKey(
+    recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE
     )
@@ -53,7 +54,9 @@ class RecipeIngredient(models.Model):
         'Ingredient',
         on_delete=models.CASCADE
     )
-    amount = models.IntegerField()
+    amount = models.IntegerField(
+        verbose_name='Количество'
+    )
 
 
 class Ingredient(models.Model):
@@ -66,6 +69,9 @@ class Ingredient(models.Model):
         verbose_name='Единица измерения',
         max_length=MODEL_NAME_MAX_LEN
     )
+
+    def __str__(self):
+        return self.name
 
 
 class Tag(models.Model):
@@ -82,6 +88,9 @@ class Tag(models.Model):
         null=True
     )
 
+    def __str__(self):
+        return self.name
+
 
 class ShopingCart(models.Model):
     user = models.ForeignKey(
@@ -89,7 +98,7 @@ class ShopingCart(models.Model):
         on_delete=models.CASCADE,
         related_name='shopingcart',
     )
-    ingredient = models.ManyToManyField(
+    ingredients = models.ManyToManyField(
         Ingredient,
         through='ShopingCartIngredient',
         verbose_name='Ингредиенты',
