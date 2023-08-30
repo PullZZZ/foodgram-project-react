@@ -92,27 +92,40 @@ class Tag(models.Model):
         return self.name
 
 
-class ShopingCart(models.Model):
+class ShoppingCart(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='shopingcart',
+        related_name='shoppingcart',
     )
-    ingredients = models.ManyToManyField(
-        Ingredient,
-        through='ShopingCartIngredient',
-        verbose_name='Ингредиенты',
-        related_name='shopingcart'
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        verbose_name='Рецепты',
+        related_name='shoppingcart'
     )
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'recipe'],
+                                    name='unique_shopping_cart'),
+        ]
 
-class ShopingCartIngredient(models.Model):
-    cart = models.ForeignKey(
-        ShopingCart,
-        on_delete=models.CASCADE
+
+class Favorite(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='favorite'
     )
-    ingredient = models.ForeignKey(
-        Ingredient,
-        on_delete=models.CASCADE
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='favorite'
     )
-    amount = models.IntegerField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'recipe'],
+                                    name='unique_favorite'),
+        ]
