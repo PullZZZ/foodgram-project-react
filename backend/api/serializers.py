@@ -1,5 +1,6 @@
 import base64
 from django.core.files.base import ContentFile
+from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
 from djoser.serializers import (
     UserSerializer as DjoserUserSerializer,
@@ -32,6 +33,10 @@ class UserSerializer(DjoserUserSerializer):
 
 class UserCreateSerializer(DjoserUserCreateSerializer):
 
+    first_name = serializers.CharField()
+    last_name = serializers.CharField()
+    email = serializers.EmailField()
+
     class Meta(DjoserUserCreateSerializer.Meta):
         fields = (
             'email',
@@ -60,7 +65,8 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
-    id = serializers.ReadOnlyField(source='ingredient.id')
+    id = serializers.PrimaryKeyRelatedField(source='ingredient.id',
+        queryset=Ingredient.objects.all())
     name = serializers.ReadOnlyField(source='ingredient.name')
     measurement_unit = serializers.ReadOnlyField(
         source='ingredient.measurement_unit')
@@ -73,11 +79,12 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
             'measurement_unit',
             'amount'
         )
+    
 
 
 class RecipeIngredientWriteSerializer(serializers.ModelSerializer):
-    id = serializers.PrimaryKeyRelatedField(
-        queryset=RecipeIngredient.objects.all()
+    id = serializers.PrimaryKeyRelatedField(source='ingredient.id',
+        queryset=Ingredient.objects.all()
     )
 
     class Meta:
@@ -86,6 +93,22 @@ class RecipeIngredientWriteSerializer(serializers.ModelSerializer):
             'id',
             'amount'
         )
+    # def to_internal_value(self, data):
+
+    #     # this is as good a place as any to set the instance
+    #     try:
+    #         model_class = Ingredient
+    #         print(data['id'])
+    #         test = Ingredient.objects.get(name='абрикосовое варенье')
+    #         print('test', test.id)
+    #         print(Ingredient.objects.get(pk=data['id']))
+    #         self.instance = model_class.objects.get(pk=data.get("id"))
+    #         print(self.instance)
+    #     except ObjectDoesNotExist:
+    #         print('хуйня случилась')
+
+    #     return super(RecipeIngredientWriteSerializer, self).to_internal_value(data)
+    
 
 
 class Base64ImageField(serializers.ImageField):
@@ -144,16 +167,10 @@ class RecipesSerialazer(serializers.ModelSerializer):
 
 
 class RecipesWriteSerialazer(serializers.ModelSerializer):
-    ingredients = RecipeIngredientWriteSerializer(
-        many=True
-    )
+    ingredients = RecipeIngredientSerializer(many=True)
     tags = serializers.PrimaryKeyRelatedField(many=True,
                                               queryset=Tag.objects.all())
     image = Base64ImageField()
-    author = serializers.PrimaryKeyRelatedField(
-        read_only=True,
-        default=serializers.CurrentUserDefault()
-    )
 
     class Meta:
         model = Recipe
@@ -166,6 +183,39 @@ class RecipesWriteSerialazer(serializers.ModelSerializer):
             'cooking_time',
             'author',
         )
+        read_only_fields = ('author',)
+
+    def create(self, validated_data):
+        ingredients_data = validated_data.pop('ingredients')
+        tags_data = validated_data.pop('tags')
+        recipe = Recipe.objects.create(**validated_data)
+        recipe.tags.set(tags_data)
+        for ingredient_data in ingredients_data:
+            RecipeIngredient.objects.create(
+                recipe=recipe,
+                ingredient=ingredient_data['ingredient']['id'],
+                amount=ingredient_data['amount']
+            )
+        return recipe
+    
+    def update(self, instance, validated_data):
+        ingredients_data = validated_data.pop('ingredients')
+        tags_data = validated_data.pop('tags')
+        instance.tags.clear()
+        instance.tags.set(tags_data)
+        instance.ingredients.clear()
+        for ingredient_data in ingredients_data:
+            RecipeIngredient.objects.create(
+                recipe=instance,
+                ingredient=ingredient_data['ingredient']['id'],
+                amount=ingredient_data['amount']
+            )
+
+        return super().update(instance, validated_data)
+
+    def to_representation(self, recipe):
+        serializer = RecipesSerialazer(recipe, context=self.context)
+        return serializer.data
 
 
 class RecipesShortSerialazer(serializers.ModelSerializer):
