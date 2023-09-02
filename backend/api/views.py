@@ -6,13 +6,14 @@ from rest_framework.permissions import (IsAuthenticated,
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from django_filters.rest_framework import DjangoFilterBackend
-from recipes.models import Ingredient, Tag, Recipe, Favorite, ShoppingCart
+from recipes.models import Ingredient, Tag, Recipe
 from users.models import Subscribe, User
 from .filters import IngredientFilter, RecipeFilter
 from .mixins import ListDetailViewSet
 from .serializers import (IngredientSerializer, TagSerializer,
-                          RecipesSerialazer, RecipesShortSerialazer,
-                          RecipesWriteSerialazer, SubscribeSerializer)
+                          RecipesSerialazer, RecipesWriteSerialazer,
+                          SubscribeSerializer, SubscribeCreateSerializer,
+                          ShoppingCartSerializer, FavoriteSerializer)
 
 
 class TagViewSet(ListDetailViewSet):
@@ -39,57 +40,48 @@ class RecipesViewSet(viewsets.ModelViewSet):
     filterset_class = RecipeFilter
 
     def get_serializer_class(self):
-        if self.action in ('favorite','shopping_cart', ):
-            return RecipesShortSerialazer
+        if self.action in ('favorite', ):
+            return FavoriteSerializer
+        if self.action in ('shopping_cart', ):
+            return ShoppingCartSerializer
         if self.action in ('list', 'retrieve'):
             return RecipesSerialazer
         return RecipesWriteSerialazer
-    
+
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
-
-    # def update(self, request, *args, **kwargs):
-    #     print('full')
-    #     response = {'message': 'Method not allowed'}
-    #     return Response(response, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     @action(detail=True, methods=['POST', 'DELETE'])
     def favorite(self, request, pk):
         recipe = get_object_or_404(Recipe, pk=pk)
-        queryset = Favorite.objects.filter(user=request.user,
-                                           recipe=recipe)
         if request.method == 'POST':
-            if queryset.exists():
-                raise ValidationError({'errors': 'Рецепт уже в избранном'})
-            Favorite.objects.create(user=request.user,
-                                    recipe=recipe)
-            serializer = self.get_serializer(recipe)
+            data = {'recipe': recipe.id}
+            serializer = self.get_serializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save(user=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            if queryset.exists():
-                queryset.delete()
-            else:
-                raise ValidationError({'errors': 'Рецепт не в избранном'})
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        deleted, _ = request.user.favorite.filter(
+            recipe=recipe
+        ).delete()
+        if not deleted:
+            raise ValidationError({'errors': 'Рецепт не в избранном'})
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['POST', 'DELETE'])
     def shopping_cart(self, request, pk):
         recipe = get_object_or_404(Recipe, pk=pk)
-        queryset = ShoppingCart.objects.filter(user=request.user,
-                                               recipe=recipe)
         if request.method == 'POST':
-            if queryset.exists():
-                raise ValidationError({'errors': 'Рецепт уже в корзине'})
-            ShoppingCart.objects.create(user=request.user,
-                                        recipe=recipe)
-            serializer = self.get_serializer(recipe)
+            data = {'recipe': recipe.id}
+            serializer = self.get_serializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save(user=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            if queryset.exists():
-                queryset.delete()
-            else:
-                raise ValidationError({'errors': 'Этого рецепта в нет корзине'})
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        deleted, _ = request.user.shoppingcart.filter(
+            recipe=recipe
+        ).delete()
+        if not deleted:
+            raise ValidationError({'errors': 'Рецепт не в корзине'})
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['GET'])
     def download_shopping_cart(self, request):
@@ -98,36 +90,34 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
 class SubscribeViewSet(viewsets.GenericViewSet):
 
-    serializer_class = SubscribeSerializer
     lookup_field = 'pk'
     lookup_value_regex = '[0-9]+'
+
+    def get_serializer_class(self):
+        if self.action in ('subscribe', ):
+            return SubscribeCreateSerializer
+        return SubscribeSerializer
 
     @action(detail=True, methods=['POST', 'DELETE'])
     def subscribe(self, request, pk):
         subscribed = get_object_or_404(User, pk=pk)
-        queryset = Subscribe.objects.filter(subscriber=request.user,
-                                            subscribed=subscribed)
         if request.method == 'POST':
-            if (request.user == subscribed):
-                raise ValidationError(
-                    {'errors': 'Нельзя подписаться на самого себя'})
-            if queryset.exists():
-                raise ValidationError({'errors': 'Подписка уже оформлена'})
-            Subscribe.objects.create(subscriber=request.user,
-                                     subscribed=subscribed)
-            serializer = self.get_serializer(subscribed)
+            data = {'subscribed': subscribed.id}
+            serializer = self.get_serializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save(subscriber=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
-            if queryset.exists():
-                queryset.delete()
-            else:
+            deleted, _ = Subscribe.objects.filter(subscriber=request.user,
+                                                  subscribed=subscribed
+                                                  ).delete()
+            if not deleted:
                 raise ValidationError({'errors': 'Подписки не было'})
             return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['GET'])
     def subscriptions(self, request):
         queryset = User.objects.filter(subscribed__subscriber=request.user)
-        queryset = self.filter_queryset(queryset)
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
