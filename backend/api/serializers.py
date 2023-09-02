@@ -154,11 +154,7 @@ class RecipesWriteSerialazer(serializers.ModelSerializer):
         )
         read_only_fields = ('author',)
 
-    def create(self, validated_data):
-        ingredients_data = validated_data.pop('ingredients')
-        tags_data = validated_data.pop('tags')
-        recipe = Recipe.objects.create(**validated_data)
-        recipe.tags.set(tags_data)
+    def add_ingredients_to_recipe(self, recipe, ingredients_data):
         ingredients_list = []
         for ingredient_data in ingredients_data:
             ingredients_list.append(
@@ -169,23 +165,21 @@ class RecipesWriteSerialazer(serializers.ModelSerializer):
                 )
             )
         recipe.ingredients.through.objects.bulk_create(ingredients_list)
+
+    def create(self, validated_data):
+        ingredients_data = validated_data.pop('ingredients')
+        tags_data = validated_data.pop('tags')
+        recipe = Recipe.objects.create(**validated_data)
+        recipe.tags.set(tags_data)
+        self.add_ingredients_to_recipe(recipe, ingredients_data)
         return recipe
 
     def update(self, instance, validated_data):
         ingredients_data = validated_data.pop('ingredients')
         tags_data = validated_data.pop('tags')
         instance.tags.set(tags_data)
-        ingredients_list = []
-        for ingredient_data in ingredients_data:
-            ingredients_list.append(
-                instance.ingredients.through(
-                    recipe=instance,
-                    ingredient=ingredient_data['ingredient']['id'],
-                    amount=ingredient_data['amount']
-                )
-            )
         instance.ingredients.clear()
-        instance.ingredients.through.objects.bulk_create(ingredients_list)
+        self.add_ingredients_to_recipe(instance, ingredients_data)
         return super().update(instance, validated_data)
 
     def to_representation(self, recipe):
