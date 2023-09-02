@@ -1,41 +1,53 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
-from rest_framework.permissions import (IsAuthenticated,
-                                        IsAuthenticatedOrReadOnly)
+from rest_framework.permissions import (
+    IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
+)
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from django_filters.rest_framework import DjangoFilterBackend
+from djoser.views import UserViewSet as DjoserUserViewSet
 from recipes.models import Ingredient, Tag, Recipe
 from users.models import Subscribe, User
 from .filters import IngredientFilter, RecipeFilter
 from .mixins import ListDetailViewSet
+from .permissions import IsAdminOrAuthorOrReadOnly
 from .serializers import (IngredientSerializer, TagSerializer,
                           RecipesSerialazer, RecipesWriteSerialazer,
                           SubscribeSerializer, SubscribeCreateSerializer,
                           ShoppingCartSerializer, FavoriteSerializer)
 
 
-class TagViewSet(ListDetailViewSet):
+class UserViewSet(DjoserUserViewSet):
+    def get_permissions(self):
+        if self.action == 'me':
+            return (IsAuthenticated(), )
+        return super().get_permissions()
+
+
+class TagViewSet(ListDetailViewSet):  # permission check
     queryset = Tag.objects.all()
+    permission_classes = (AllowAny, )
     serializer_class = TagSerializer
     pagination_class = None
 
 
-class IngredientViewSet(ListDetailViewSet):
+class IngredientViewSet(ListDetailViewSet):  # permission check
     queryset = Ingredient.objects.all()
+    permission_classes = (AllowAny, )
     serializer_class = IngredientSerializer
     pagination_class = None
     filter_backends = (DjangoFilterBackend,)
     filterset_class = IngredientFilter
 
 
-class RecipesViewSet(viewsets.ModelViewSet):
-    serializer_class = RecipesSerialazer
+class RecipesViewSet(viewsets.ModelViewSet):  # permission check
     queryset = Recipe.objects.all()
     lookup_field = 'pk'
     lookup_value_regex = '[0-9]+'
-    permission_classes = (IsAuthenticatedOrReadOnly, )
+    permission_classes = (IsAuthenticatedOrReadOnly,
+                          IsAdminOrAuthorOrReadOnly)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
 
@@ -83,7 +95,10 @@ class RecipesViewSet(viewsets.ModelViewSet):
             raise ValidationError({'errors': 'Рецепт не в корзине'})
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=False, methods=['GET'])
+    @action(detail=False,
+            methods=['GET'],
+            permission_classes=(IsAuthenticated, )
+            )
     def download_shopping_cart(self, request):
         pass
 
@@ -92,6 +107,7 @@ class SubscribeViewSet(viewsets.GenericViewSet):
 
     lookup_field = 'pk'
     lookup_value_regex = '[0-9]+'
+    permission_classes = (IsAuthenticated, )
 
     def get_serializer_class(self):
         if self.action in ('subscribe', ):
