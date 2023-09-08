@@ -14,7 +14,8 @@ from users.models import Subscribe, User
 
 
 class UserSerializer(DjoserUserSerializer):
-    is_subscribed = serializers.SerializerMethodField()
+    # is_subscribed = serializers.SerializerMethodField()
+    is_subscribed = serializers.BooleanField(default=False)
 
     class Meta(DjoserUserSerializer.Meta):
         fields = (
@@ -26,10 +27,10 @@ class UserSerializer(DjoserUserSerializer):
             'is_subscribed'
         )
 
-    def get_is_subscribed(self, user):
-        current_user = self.context.get('request').user
-        return (current_user.is_authenticated
-                and user.subscribed.filter(subscriber=current_user).exists())
+    # def get_is_subscribed(self, user):
+    #     current_user = self.context.get('request').user
+    #     return (current_user.is_authenticated
+    #             and user.subscribed.filter(subscriber=current_user).exists())
 
 
 class UserCreateSerializer(DjoserUserCreateSerializer):
@@ -105,8 +106,8 @@ class RecipesSerialazer(serializers.ModelSerializer):
         many=True,
         source='recipeingredient_set',
     )
-    is_favorited = serializers.SerializerMethodField()
-    is_in_shopping_cart = serializers.SerializerMethodField()
+    is_favorited = serializers.BooleanField(default=False)
+    is_in_shopping_cart = serializers.BooleanField(default=False)
 
     class Meta:
         model = Recipe
@@ -123,15 +124,15 @@ class RecipesSerialazer(serializers.ModelSerializer):
             'cooking_time',
         )
 
-    def get_is_favorited(self, recipe):
-        user = self.context['request'].user
-        return (user.is_authenticated
-                and user.favorite.filter(recipe=recipe).exists())
+    # def get_is_favorited(self, recipe):
+    #     user = self.context['request'].user
+    #     return (user.is_authenticated
+    #             and user.favorite.filter(recipe=recipe).exists())
 
-    def get_is_in_shopping_cart(self, recipe):
-        user = self.context['request'].user
-        return (user.is_authenticated
-                and user.shoppingcart.filter(recipe=recipe).exists())
+    # def get_is_in_shopping_cart(self, recipe):
+    #     user = self.context['request'].user
+    #     return (user.is_authenticated
+    #             and user.shoppingcart.filter(recipe=recipe).exists())
 
 
 class RecipesWriteSerialazer(serializers.ModelSerializer):

@@ -1,3 +1,4 @@
+from django.db.models import Case, BooleanField, Value, When
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -20,6 +21,19 @@ from .serializers import (IngredientSerializer, TagSerializer,
 
 
 class UserViewSet(DjoserUserViewSet):
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        if self.request.user.is_authenticated:
+            return queryset.annotate(
+                is_subscribed=Case(
+                    When(subscribed__subscriber=self.request.user.id,
+                         then=Value(True)),
+                    default=Value(False),
+                    output_field=BooleanField(),
+                )
+            )
+        return queryset
+
     def get_permissions(self):
         if self.action == 'me':
             return (IsAuthenticated(), )
@@ -43,13 +57,31 @@ class IngredientViewSet(ListDetailViewSet):
 
 
 class RecipesViewSet(viewsets.ModelViewSet):
-    queryset = Recipe.objects.all().select_related('author')
+    # queryset = Recipe.objects.all().select_related('author')
     lookup_field = 'pk'
     lookup_value_regex = '[0-9]+'
     permission_classes = (IsAuthenticatedOrReadOnly,
                           IsAdminOrAuthorOrReadOnly)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
+
+    def get_queryset(self):
+        if self.request.user.is_authenticated:
+            return Recipe.objects.all().annotate(
+                is_favorited=Case(
+                    When(favorite__user=self.request.user.id,
+                         then=Value(True)),
+                    default=Value(False),
+                    output_field=BooleanField())
+            ).annotate(
+                is_in_shopping_cart=Case(
+                    When(shoppingcart__user=self.request.user.id,
+                         then=Value(True)),
+                    default=Value(False),
+                    output_field=BooleanField(),
+                )
+            )
+        return Recipe.objects.all().select_related('author')
 
     def get_serializer_class(self):
         if self.action == 'favorite':
