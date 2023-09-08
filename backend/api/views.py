@@ -1,11 +1,11 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import (
     IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
 )
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet as DjoserUserViewSet
 from recipes.models import Ingredient, Tag, Recipe
@@ -26,14 +26,14 @@ class UserViewSet(DjoserUserViewSet):
         return super().get_permissions()
 
 
-class TagViewSet(ListDetailViewSet):  # permission check
+class TagViewSet(ListDetailViewSet):
     queryset = Tag.objects.all()
     permission_classes = (AllowAny, )
     serializer_class = TagSerializer
     pagination_class = None
 
 
-class IngredientViewSet(ListDetailViewSet):  # permission check
+class IngredientViewSet(ListDetailViewSet):
     queryset = Ingredient.objects.all()
     permission_classes = (AllowAny, )
     serializer_class = IngredientSerializer
@@ -42,8 +42,8 @@ class IngredientViewSet(ListDetailViewSet):  # permission check
     filterset_class = IngredientFilter
 
 
-class RecipesViewSet(viewsets.ModelViewSet):  # permission check
-    queryset = Recipe.objects.all()
+class RecipesViewSet(viewsets.ModelViewSet):
+    queryset = Recipe.objects.all().select_related('author')
     lookup_field = 'pk'
     lookup_value_regex = '[0-9]+'
     permission_classes = (IsAuthenticatedOrReadOnly,
@@ -52,9 +52,9 @@ class RecipesViewSet(viewsets.ModelViewSet):  # permission check
     filterset_class = RecipeFilter
 
     def get_serializer_class(self):
-        if self.action in ('favorite', ):
+        if self.action == 'favorite':
             return FavoriteSerializer
-        if self.action in ('shopping_cart', ):
+        if self.action == 'shopping_cart':
             return ShoppingCartSerializer
         if self.action in ('list', 'retrieve'):
             return RecipesSerialazer
@@ -72,6 +72,7 @@ class RecipesViewSet(viewsets.ModelViewSet):  # permission check
             serializer.is_valid(raise_exception=True)
             serializer.save(user=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
         deleted, _ = request.user.favorite.filter(
             recipe=recipe
         ).delete()
@@ -88,6 +89,7 @@ class RecipesViewSet(viewsets.ModelViewSet):  # permission check
             serializer.is_valid(raise_exception=True)
             serializer.save(user=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
         deleted, _ = request.user.shoppingcart.filter(
             recipe=recipe
         ).delete()
@@ -100,7 +102,16 @@ class RecipesViewSet(viewsets.ModelViewSet):  # permission check
             permission_classes=(IsAuthenticated, )
             )
     def download_shopping_cart(self, request):
-        pass
+        ingredients = Recipe.ingredients.through.objects.filter(
+            recipe__shoppingcart__user=request.user)
+
+        ingr_dict = {}
+        for ingr in ingredients:
+            ingr_dict[ingr.ingredient] = (
+                ingr_dict.get(ingr.ingredient, 0) + ingr.amount)
+        for key, value in ingr_dict.items():
+            print(key.name, '-', value, key.measurement_unit)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class SubscribeViewSet(viewsets.GenericViewSet):
@@ -110,7 +121,7 @@ class SubscribeViewSet(viewsets.GenericViewSet):
     permission_classes = (IsAuthenticated, )
 
     def get_serializer_class(self):
-        if self.action in ('subscribe', ):
+        if self.action == 'subscribe':
             return SubscribeCreateSerializer
         return SubscribeSerializer
 
@@ -123,13 +134,13 @@ class SubscribeViewSet(viewsets.GenericViewSet):
             serializer.is_valid(raise_exception=True)
             serializer.save(subscriber=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            deleted, _ = Subscribe.objects.filter(subscriber=request.user,
-                                                  subscribed=subscribed
-                                                  ).delete()
-            if not deleted:
-                raise ValidationError({'errors': 'Подписки не было'})
-            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        deleted, _ = Subscribe.objects.filter(subscriber=request.user,
+                                              subscribed=subscribed
+                                              ).delete()
+        if not deleted:
+            raise ValidationError({'errors': 'Подписки не было'})
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['GET'])
     def subscriptions(self, request):

@@ -1,5 +1,6 @@
-from colorfield.fields import ColorField
+from django.core.validators import MinValueValidator
 from django.db import models
+from colorfield.fields import ColorField
 from foodgram.settings import MODEL_NAME_MAX_LEN
 from users.models import User
 
@@ -13,7 +14,6 @@ class Recipe (models.Model):
     name = models.CharField(
         verbose_name='Название',
         max_length=MODEL_NAME_MAX_LEN,
-        db_index=True,
     )
     text = models.TextField(
         verbose_name='Описание'
@@ -21,8 +21,9 @@ class Recipe (models.Model):
     image = models.ImageField(
         upload_to='recipes/images/'
     )
-    cooking_time = models.IntegerField(
-        verbose_name='Время приготовления (в минутах)'
+    cooking_time = models.PositiveIntegerField(
+        verbose_name='Время приготовления (в минутах)',
+        validators=[MinValueValidator(1)]
     )
     ingredients = models.ManyToManyField(
         'Ingredient',
@@ -55,15 +56,21 @@ class RecipeIngredient(models.Model):
         on_delete=models.CASCADE
     )
     amount = models.IntegerField(
-        verbose_name='Количество'
+        verbose_name='Количество',
+        validators=[MinValueValidator(1)]
     )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['recipe', 'ingredient'],
+                                    name='unique_ingredient_in_recipe'),
+        ]
 
 
 class Ingredient(models.Model):
     name = models.CharField(
         verbose_name='Название',
         max_length=MODEL_NAME_MAX_LEN,
-        db_index=True,
     )
     measurement_unit = models.CharField(
         verbose_name='Единица измерения',
@@ -78,9 +85,9 @@ class Tag(models.Model):
     name = models.CharField(
         verbose_name='Название',
         max_length=MODEL_NAME_MAX_LEN,
-        db_index=True,
+        unique=True
     )
-    color = ColorField(default='#FF0000')
+    color = ColorField(default='#FF0000', unique=True)
     slug = models.SlugField(
         verbose_name='Slug категории',
         max_length=MODEL_NAME_MAX_LEN,
