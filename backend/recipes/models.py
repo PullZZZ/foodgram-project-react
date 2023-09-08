@@ -37,10 +37,15 @@ class Recipe (models.Model):
         related_name='recipes'
     )
 
+    created = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата публикации'
+    )
+
     class Meta:
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
-        ordering = ('name', )
+        ordering = ('-created', )
 
     def __str__(self):
         return self.name
