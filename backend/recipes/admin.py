@@ -1,12 +1,13 @@
 from django.contrib import admin
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
-from .models import Ingredient, Recipe, Tag, RecipeIngredient
+from .models import (Ingredient, Recipe, Tag,
+                     RecipeIngredient, Favorite, ShoppingCart)
 
 
-class TagAdmin(admin.ModelAdmin):
+class TagAdmin(ImportExportModelAdmin):
     list_display = (
-        "id",
+        # "id",
         "name",
         "color",
         "slug",
@@ -41,9 +42,31 @@ class RecipesAdmin(admin.ModelAdmin):
         'author',
         'name',
         'text',
+        'favorite_count'
     )
+
+    def favorite_count(self, recipe):
+        return recipe.favorite.count()
+
+
+class ShoppingCartAdmin(admin.ModelAdmin):
+    list_display = (
+        'user',
+        'recipe'
+    )
+    search_fields = ('name',)
+
+
+class FavoriteAdmin(admin.ModelAdmin):
+    list_display = (
+        'user',
+        'recipe'
+    )
+    search_fields = ('name',)
 
 
 admin.site.register(Tag, TagAdmin)
 admin.site.register(Ingredient, IngredientAdmin)
 admin.site.register(Recipe, RecipesAdmin)
+admin.site.register(ShoppingCart, ShoppingCartAdmin)
+admin.site.register(Favorite, FavoriteAdmin)

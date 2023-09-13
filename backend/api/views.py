@@ -1,4 +1,4 @@
-from django.db.models import Case, BooleanField, Value, When
+from django.db.models import Case, BooleanField, Value, When, Sum
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -135,14 +135,9 @@ class RecipesViewSet(viewsets.ModelViewSet):
             )
     def download_shopping_cart(self, request):
         ingredients = Recipe.ingredients.through.objects.filter(
-            recipe__shoppingcart__user=request.user)
-
-        ingr_dict = {}
-        for ingr in ingredients:
-            ingr_dict[ingr.ingredient] = (
-                ingr_dict.get(ingr.ingredient, 0) + ingr.amount)
-        for key, value in ingr_dict.items():
-            print(key.name, '-', value, key.measurement_unit)
+            recipe__shoppingcart__user=request.user
+        ).values('ingredient__name', 'ingredient__measurement_unit'
+                 ).annotate(amount=Sum('amount'))
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

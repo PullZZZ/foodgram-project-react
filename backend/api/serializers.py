@@ -27,11 +27,6 @@ class UserSerializer(DjoserUserSerializer):
             'is_subscribed'
         )
 
-    # def get_is_subscribed(self, user):
-    #     current_user = self.context.get('request').user
-    #     return (current_user.is_authenticated
-    #             and user.subscribed.filter(subscriber=current_user).exists())
-
 
 class UserCreateSerializer(DjoserUserCreateSerializer):
 
@@ -124,16 +119,6 @@ class RecipesSerialazer(serializers.ModelSerializer):
             'cooking_time',
         )
 
-    # def get_is_favorited(self, recipe):
-    #     user = self.context['request'].user
-    #     return (user.is_authenticated
-    #             and user.favorite.filter(recipe=recipe).exists())
-
-    # def get_is_in_shopping_cart(self, recipe):
-    #     user = self.context['request'].user
-    #     return (user.is_authenticated
-    #             and user.shoppingcart.filter(recipe=recipe).exists())
-
 
 class RecipesWriteSerialazer(serializers.ModelSerializer):
     ingredients = RecipeIngredientSerializer(many=True)
@@ -182,7 +167,8 @@ class RecipesWriteSerialazer(serializers.ModelSerializer):
             counter_dict[id] = 1
         return ingredients
 
-    def add_ingredients_to_recipe(self, recipe, ingredients_data):
+    def _add_ingredients_to_recipe(self, recipe, ingredients_data):
+        """Добавляет ингредиенты в рецепт"""
         ingredients_list = []
         for ingredient_data in ingredients_data:
             ingredients_list.append(
@@ -200,7 +186,7 @@ class RecipesWriteSerialazer(serializers.ModelSerializer):
         tags_data = validated_data.pop('tags')
         recipe = Recipe.objects.create(**validated_data)
         recipe.tags.set(tags_data)
-        self.add_ingredients_to_recipe(recipe, ingredients_data)
+        self._add_ingredients_to_recipe(recipe, ingredients_data)
         return recipe
 
     @transaction.atomic
@@ -209,7 +195,7 @@ class RecipesWriteSerialazer(serializers.ModelSerializer):
         tags_data = validated_data.pop('tags')
         instance.tags.set(tags_data)
         instance.ingredients.clear()
-        self.add_ingredients_to_recipe(instance, ingredients_data)
+        self._add_ingredients_to_recipe(instance, ingredients_data)
         return super().update(instance, validated_data)
 
     def to_representation(self, recipe):
