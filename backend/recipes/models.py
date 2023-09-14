@@ -71,6 +71,9 @@ class RecipeIngredient(models.Model):
                                     name='unique_ingredient_in_recipe'),
         ]
 
+    def __str__(self):
+        return f'{self.recipe.name}: {self.ingredient.name} - {self.amount}'
+
 
 class Ingredient(models.Model):
     name = models.CharField(
@@ -81,6 +84,10 @@ class Ingredient(models.Model):
         verbose_name='Единица измерения',
         max_length=MODEL_NAME_MAX_LEN
     )
+
+    class Meta:
+        verbose_name = 'Ингредиент'
+        verbose_name_plural = 'Ингредиенты'
 
     def __str__(self):
         return self.name
@@ -100,6 +107,10 @@ class Tag(models.Model):
         null=True
     )
 
+    class Meta:
+        verbose_name = 'Тег'
+        verbose_name_plural = 'Теги'
+
     def __str__(self):
         return self.name
 
@@ -118,10 +129,15 @@ class ShoppingCart(models.Model):
     )
 
     class Meta:
+        verbose_name = 'Корзина'
+        verbose_name_plural = 'Корзина'
         constraints = [
             models.UniqueConstraint(fields=['user', 'recipe'],
                                     name='unique_shopping_cart'),
         ]
+
+    def __str__(self):
+        return f'{self.user.username}: {self.recipe.name}'
 
 
 class Favorite(models.Model):
@@ -137,7 +153,12 @@ class Favorite(models.Model):
     )
 
     class Meta:
+        verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранное'
         constraints = [
             models.UniqueConstraint(fields=['user', 'recipe'],
                                     name='unique_favorite'),
         ]
+
+    def __str__(self):
+        return f'{self.user.username}: {self.recipe.name}'

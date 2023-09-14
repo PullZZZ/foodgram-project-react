@@ -1,5 +1,8 @@
 from django.db.models import Case, BooleanField, Value, When, Sum
 from django.shortcuts import get_object_or_404
+
+from django_filters.rest_framework import DjangoFilterBackend
+from djoser.views import UserViewSet as DjoserUserViewSet
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -7,13 +10,12 @@ from rest_framework.permissions import (
     IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
 )
 from rest_framework.response import Response
-from django_filters.rest_framework import DjangoFilterBackend
-from djoser.views import UserViewSet as DjoserUserViewSet
+
 from recipes.models import Ingredient, Tag, Recipe
 from users.models import Subscribe, User
 from .filters import IngredientFilter, RecipeFilter
 from .mixins import ListDetailViewSet
-from .permissions import IsAdminOrAuthorOrReadOnly
+from .permissions import AuthorOrAdminOrReadOnly
 from .serializers import (IngredientSerializer, TagSerializer,
                           RecipesSerialazer, RecipesWriteSerialazer,
                           SubscribeSerializer, SubscribeCreateSerializer,
@@ -26,11 +28,10 @@ class UserViewSet(DjoserUserViewSet):
         if self.request.user.is_authenticated:
             return queryset.annotate(
                 is_subscribed=Case(
-                    When(subscribed__subscriber=self.request.user.id,
+                    When(subscribeds__subscriber=self.request.user.id,
                          then=Value(True)),
                     default=Value(False),
-                    output_field=BooleanField(),
-                )
+                    output_field=BooleanField())
             )
         return queryset
 
@@ -61,26 +62,24 @@ class RecipesViewSet(viewsets.ModelViewSet):
     lookup_field = 'pk'
     lookup_value_regex = '[0-9]+'
     permission_classes = (IsAuthenticatedOrReadOnly,
-                          IsAdminOrAuthorOrReadOnly)
+                          AuthorOrAdminOrReadOnly)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
-            return Recipe.objects.all().annotate(
-                is_favorited=Case(
-                    When(favorite__user=self.request.user.id,
-                         then=Value(True)),
-                    default=Value(False),
-                    output_field=BooleanField())
-            ).annotate(
-                is_in_shopping_cart=Case(
-                    When(shoppingcart__user=self.request.user.id,
-                         then=Value(True)),
-                    default=Value(False),
-                    output_field=BooleanField(),
-                )
-            )
+            return (Recipe.objects.all().select_related('author')
+                    .annotate(is_favorited=Case(
+                        When(favorite__user=self.request.user.id,
+                             then=Value(True)),
+                        default=Value(False),
+                        output_field=BooleanField()))
+                    .annotate(is_in_shopping_cart=Case(
+                        When(shoppingcart__user=self.request.user.id,
+                             then=Value(True)),
+                        default=Value(False),
+                        output_field=BooleanField()))
+                    )
         return Recipe.objects.all().select_related('author')
 
     def get_serializer_class(self):
@@ -134,10 +133,14 @@ class RecipesViewSet(viewsets.ModelViewSet):
             permission_classes=(IsAuthenticated, )
             )
     def download_shopping_cart(self, request):
-        ingredients = Recipe.ingredients.through.objects.filter(
-            recipe__shoppingcart__user=request.user
-        ).values('ingredient__name', 'ingredient__measurement_unit'
-                 ).annotate(amount=Sum('amount'))
+        ingredients = (
+            Recipe.ingredients.through.objects.filter(
+                recipe__shoppingcart__user=request.user)
+            .values('ingredient__name',
+                    'ingredient__measurement_unit')
+            .annotate(amount=Sum('amount'))
+        )
+        print(ingredients)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -171,7 +174,7 @@ class SubscribeViewSet(viewsets.GenericViewSet):
 
     @action(detail=False, methods=['GET'])
     def subscriptions(self, request):
-        queryset = User.objects.filter(subscribed__subscriber=request.user)
+        queryset = User.objects.filter(subscribeds__subscriber=request.user)
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
