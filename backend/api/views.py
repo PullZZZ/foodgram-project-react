@@ -1,4 +1,5 @@
 from django.db.models import Case, BooleanField, Value, When, Sum
+from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 
 from django_filters.rest_framework import DjangoFilterBackend
@@ -140,8 +141,6 @@ class RecipesViewSet(viewsets.ModelViewSet):
                     'ingredient__measurement_unit')
             .annotate(amount=Sum('amount'))
         )
-        print(ingredients)
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class SubscribeViewSet(viewsets.GenericViewSet):
