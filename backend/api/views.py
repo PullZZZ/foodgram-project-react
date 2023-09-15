@@ -1,5 +1,7 @@
+import csv
+
 from django.db.models import Case, BooleanField, Value, When, Sum
-from django.http import FileResponse
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 
 from django_filters.rest_framework import DjangoFilterBackend
@@ -59,7 +61,6 @@ class IngredientViewSet(ListDetailViewSet):
 
 
 class RecipesViewSet(viewsets.ModelViewSet):
-    # queryset = Recipe.objects.all().select_related('author')
     lookup_field = 'pk'
     lookup_value_regex = '[0-9]+'
     permission_classes = (IsAuthenticatedOrReadOnly,
@@ -140,7 +141,20 @@ class RecipesViewSet(viewsets.ModelViewSet):
             .values('ingredient__name',
                     'ingredient__measurement_unit')
             .annotate(amount=Sum('amount'))
+            .order_by('ingredient__name')
         )
+        if not ingredients.exists():
+            raise ValidationError({'errors': 'Корзина пуста'})
+        response = HttpResponse(
+            content_type="text/csv",
+            headers={'Content-Disposition':
+                     'attachment; filename="shopping_list.csv"'},
+        )
+        writer = csv.writer(response)
+        writer.writerow(ingredients.first().keys())
+        for ingredient in ingredients:
+            writer.writerow(ingredient.values())
+        return response
 
 
 class SubscribeViewSet(viewsets.GenericViewSet):
