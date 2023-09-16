@@ -1,7 +1,4 @@
-import csv
-
 from django.db.models import Case, BooleanField, Value, When, Sum
-from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 
 from django_filters.rest_framework import DjangoFilterBackend
@@ -23,6 +20,7 @@ from .serializers import (IngredientSerializer, TagSerializer,
                           RecipesSerialazer, RecipesWriteSerialazer,
                           SubscribeSerializer, SubscribeCreateSerializer,
                           ShoppingCartSerializer, FavoriteSerializer)
+from .utils import queryset_to_csv
 
 
 class UserViewSet(DjoserUserViewSet):
@@ -145,15 +143,8 @@ class RecipesViewSet(viewsets.ModelViewSet):
         )
         if not ingredients.exists():
             raise ValidationError({'errors': 'Корзина пуста'})
-        response = HttpResponse(
-            content_type="text/csv",
-            headers={'Content-Disposition':
-                     'attachment; filename="shopping_list.csv"'},
-        )
-        writer = csv.writer(response)
-        writer.writerow(ingredients.first().keys())
-        for ingredient in ingredients:
-            writer.writerow(ingredient.values())
+        response = queryset_to_csv(ingredients)
+        print('ok')
         return response
 
 

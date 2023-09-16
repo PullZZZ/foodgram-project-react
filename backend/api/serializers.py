@@ -11,6 +11,7 @@ from rest_framework.validators import UniqueTogetherValidator
 from recipes.models import (Ingredient, Tag, Recipe,
                             Favorite, ShoppingCart)
 from users.models import Subscribe, User
+from .validators import unique_in_list
 
 
 class UserSerializer(DjoserUserSerializer):
@@ -144,13 +145,10 @@ class RecipesWriteSerialazer(serializers.ModelSerializer):
             raise ValidationError(
                 'Должен быть указан хотя-бы один тег'
             )
-        counter_dict = {}
-        for tag in tags:
-            if counter_dict.get(tag, 0) > 0:
-                raise ValidationError(
-                    'Тег в рецепте может быть указан только один раз'
-                )
-            counter_dict[tag] = 1
+        if not unique_in_list(tags):
+            raise ValidationError(
+                'Тег в рецепте может быть указан только один раз'
+            )
         return tags
 
     def validate_ingredients(self, ingredients):
@@ -158,17 +156,16 @@ class RecipesWriteSerialazer(serializers.ModelSerializer):
             raise ValidationError(
                 'Должен быть указан хотя-бы один ингредиент'
             )
-        counter_dict = {}
-        for ingredient in ingredients:
-            id = ingredient['ingredient']['id']
-            if counter_dict.get(id, 0) > 0:
-                raise ValidationError(
-                    'Ингредиент в рецепте может быть указан только один раз')
-            counter_dict[id] = 1
+        if not unique_in_list(
+                [ingredient['ingredient']['id'] for ingredient in ingredients]
+        ):
+            raise ValidationError(
+                'Ингредиент в рецепте может быть указан только один раз')
         return ingredients
 
     def _add_ingredients_to_recipe(self, recipe, ingredients_data):
         """Добавляет ингредиенты в рецепт"""
+        recipe.ingredients.clear()
         ingredients_list = []
         for ingredient_data in ingredients_data:
             ingredients_list.append(
@@ -194,7 +191,6 @@ class RecipesWriteSerialazer(serializers.ModelSerializer):
         ingredients_data = validated_data.pop('ingredients')
         tags_data = validated_data.pop('tags')
         instance.tags.set(tags_data)
-        instance.ingredients.clear()
         self._add_ingredients_to_recipe(instance, ingredients_data)
         return super().update(instance, validated_data)
 
