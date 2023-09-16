@@ -147,9 +147,7 @@ dmypy.json
 
 # папки со статикой и медиа
 media
-media
-collected_static
 collected_static
 
 # Others
-node_modules/
+node_modules
