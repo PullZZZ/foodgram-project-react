@@ -144,7 +144,6 @@ class RecipesViewSet(viewsets.ModelViewSet):
         if not ingredients.exists():
             raise ValidationError({'errors': 'Корзина пуста'})
         response = queryset_to_csv(ingredients)
-        print('ok')
         return response
 
 

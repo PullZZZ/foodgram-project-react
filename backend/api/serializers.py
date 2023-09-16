@@ -189,8 +189,8 @@ class RecipesWriteSerialazer(serializers.ModelSerializer):
     @transaction.atomic
     def update(self, instance, validated_data):
         ingredients_data = validated_data.pop('ingredients')
-        tags_data = validated_data.pop('tags')
-        instance.tags.set(tags_data)
+        # tags_data = validated_data.pop('tags')
+        # instance.tags.set(tags_data)
         self._add_ingredients_to_recipe(instance, ingredients_data)
         return super().update(instance, validated_data)
 

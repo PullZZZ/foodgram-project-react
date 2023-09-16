@@ -11,8 +11,7 @@ def queryset_to_csv(queryset):
         headers={'Content-Disposition':
                  'attachment; filename="shopping_list.csv"'},
     )
-    writer = csv.writer(response)
-    writer.writerow(queryset.first().keys())
-    for ingredient in queryset:
-        writer.writerow(ingredient.values())
+    writer = csv.DictWriter(response, fieldnames=queryset.first().keys())
+    writer.writeheader()
+    writer.writerows(queryset)
     return response
