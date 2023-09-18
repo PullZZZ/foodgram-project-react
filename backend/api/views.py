@@ -67,15 +67,17 @@ class RecipesViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.is_authenticated:
-            return (Recipe.objects.all()
+            return (Recipe.objects.all().select_related('author')
                     .annotate(is_favorited=Exists(
                         user.favorite.filter(recipe=OuterRef('pk'))
                     ))
                     .annotate(is_in_shopping_cart=Exists(
                         user.shoppingcart.filter(recipe=OuterRef('pk'))
                     ))
+                    .prefetch_related('tags', 'ingredients')
                     )
-        return Recipe.objects.all().select_related('author')
+        return (Recipe.objects.all().select_related('author')
+                .prefetch_related('tags', 'ingredients'))
 
     def get_serializer_class(self):
         if self.action == 'favorite':
