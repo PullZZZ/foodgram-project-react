@@ -1,39 +1,36 @@
-from django.db.models import Case, BooleanField, Value, When, Sum
+from django.db.models import Exists, OuterRef, Sum
 from django.shortcuts import get_object_or_404
-
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet as DjoserUserViewSet
-from rest_framework import viewsets, status
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
-from rest_framework.permissions import (
-    IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
-)
+from rest_framework.permissions import (AllowAny, IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 
-from recipes.models import Ingredient, Tag, Recipe
+from recipes.models import Ingredient, Recipe, Tag
 from users.models import Subscribe, User
+
 from .filters import IngredientFilter, RecipeFilter
 from .mixins import ListDetailViewSet
 from .permissions import AuthorOrAdminOrReadOnly
-from .serializers import (IngredientSerializer, TagSerializer,
+from .serializers import (FavoriteSerializer, IngredientSerializer,
                           RecipesSerialazer, RecipesWriteSerialazer,
-                          SubscribeSerializer, SubscribeCreateSerializer,
-                          ShoppingCartSerializer, FavoriteSerializer)
+                          ShoppingCartSerializer, SubscribeCreateSerializer,
+                          SubscribeSerializer, TagSerializer)
 from .utils import queryset_to_csv
 
 
 class UserViewSet(DjoserUserViewSet):
     def get_queryset(self):
+        user = self.request.user
         queryset = super().get_queryset()
-        if self.request.user.is_authenticated:
+        if user.is_authenticated:
             return queryset.annotate(
-                is_subscribed=Case(
-                    When(subscribeds__subscriber=self.request.user.id,
-                         then=Value(True)),
-                    default=Value(False),
-                    output_field=BooleanField())
-            )
+                is_subscribed=Exists(
+                    user.subscribers.filter(subscribed=OuterRef('pk'))
+                ))
         return queryset
 
     def get_permissions(self):
@@ -67,20 +64,19 @@ class RecipesViewSet(viewsets.ModelViewSet):
     filterset_class = RecipeFilter
 
     def get_queryset(self):
-        if self.request.user.is_authenticated:
+        user = self.request.user
+        if user.is_authenticated:
             return (Recipe.objects.all().select_related('author')
-                    .annotate(is_favorited=Case(
-                        When(favorite__user=self.request.user.id,
-                             then=Value(True)),
-                        default=Value(False),
-                        output_field=BooleanField()))
-                    .annotate(is_in_shopping_cart=Case(
-                        When(shoppingcart__user=self.request.user.id,
-                             then=Value(True)),
-                        default=Value(False),
-                        output_field=BooleanField()))
+                    .annotate(is_favorited=Exists(
+                        user.favorite.filter(recipe=OuterRef('pk'))
+                    ))
+                    .annotate(is_in_shopping_cart=Exists(
+                        user.shoppingcart.filter(recipe=OuterRef('pk'))
+                    ))
+                    .prefetch_related('tags', 'ingredients')
                     )
-        return Recipe.objects.all().select_related('author')
+        return (Recipe.objects.all().select_related('author')
+                .prefetch_related('tags', 'ingredients'))
 
     def get_serializer_class(self):
         if self.action == 'favorite':
