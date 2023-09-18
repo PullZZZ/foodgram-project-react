@@ -1,25 +1,24 @@
-from django.db.models import Sum, Exists, OuterRef
+from django.db.models import Exists, OuterRef, Sum
 from django.shortcuts import get_object_or_404
-
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet as DjoserUserViewSet
-from rest_framework import viewsets, status
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
-from rest_framework.permissions import (
-    IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
-)
+from rest_framework.permissions import (AllowAny, IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 
-from recipes.models import Ingredient, Tag, Recipe
+from recipes.models import Ingredient, Recipe, Tag
 from users.models import Subscribe, User
+
 from .filters import IngredientFilter, RecipeFilter
 from .mixins import ListDetailViewSet
 from .permissions import AuthorOrAdminOrReadOnly
-from .serializers import (IngredientSerializer, TagSerializer,
+from .serializers import (FavoriteSerializer, IngredientSerializer,
                           RecipesSerialazer, RecipesWriteSerialazer,
-                          SubscribeSerializer, SubscribeCreateSerializer,
-                          ShoppingCartSerializer, FavoriteSerializer)
+                          ShoppingCartSerializer, SubscribeCreateSerializer,
+                          SubscribeSerializer, TagSerializer)
 from .utils import queryset_to_csv
 
 

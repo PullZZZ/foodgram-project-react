@@ -1,24 +1,23 @@
 import base64
+
 from django.core.files.base import ContentFile
 from django.db import transaction
-from djoser.serializers import (
-    UserSerializer as DjoserUserSerializer,
-    UserCreateSerializer as DjoserUserCreateSerializer
-)
+from djoser import serializers as d_serializers
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.validators import UniqueTogetherValidator
-from recipes.models import (Ingredient, Tag, Recipe,
-                            Favorite, ShoppingCart)
+
+from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 from users.models import Subscribe, User
+
 from .validators import unique_in_list
 
 
-class UserSerializer(DjoserUserSerializer):
+class UserSerializer(d_serializers.UserSerializer):
     # is_subscribed = serializers.SerializerMethodField()
     is_subscribed = serializers.BooleanField(default=False)
 
-    class Meta(DjoserUserSerializer.Meta):
+    class Meta(d_serializers.UserSerializer.Meta):
         fields = (
             'email',
             'id',
@@ -29,13 +28,13 @@ class UserSerializer(DjoserUserSerializer):
         )
 
 
-class UserCreateSerializer(DjoserUserCreateSerializer):
+class UserCreateSerializer(d_serializers.UserCreateSerializer):
 
     first_name = serializers.CharField()
     last_name = serializers.CharField()
     email = serializers.EmailField()
 
-    class Meta(DjoserUserCreateSerializer.Meta):
+    class Meta(d_serializers.UserCreateSerializer.Meta):
         fields = (
             'email',
             'id',
