@@ -7,10 +7,10 @@ from .models import (Ingredient, Recipe, Tag,
 
 class TagAdmin(ImportExportModelAdmin):
     list_display = (
-        # "id",
-        "name",
-        "color",
-        "slug",
+        'id',
+        'name',
+        'color',
+        'slug',
     )
     search_fields = ('name', )
 
@@ -23,11 +23,12 @@ class IngredientResource(resources.ModelResource):
 
 class IngredientAdmin(ImportExportModelAdmin):
     list_display = (
-        "id",
-        "name",
-        "measurement_unit",
+        'id',
+        'name',
+        'measurement_unit',
     )
-    search_fields = ('name',)
+    search_fields = ('name', )
+    list_filter = ('name', )
     resource_classes = (IngredientResource, )
 
 
@@ -38,6 +39,7 @@ class RecipeIngredientInline(admin.TabularInline):
 
 class RecipesAdmin(admin.ModelAdmin):
     inlines = (RecipeIngredientInline, )
+    list_filter = ('name', 'author', 'tags')
     list_display = (
         'author',
         'name',
