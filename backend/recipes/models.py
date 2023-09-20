@@ -2,8 +2,10 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from colorfield.fields import ColorField
 
-from foodgram.settings import MODEL_NAME_MAX_LEN
+from foodgram.settings import CHARFIELD_MAX_LEN
 from users.models import User
+
+from .validators import RecipeNameValidator
 
 
 class Recipe (models.Model):
@@ -15,7 +17,8 @@ class Recipe (models.Model):
     )
     name = models.CharField(
         verbose_name='Название',
-        max_length=MODEL_NAME_MAX_LEN,
+        max_length=CHARFIELD_MAX_LEN,
+        validators=[RecipeNameValidator()]
     )
     text = models.TextField(
         verbose_name='Описание'
@@ -83,11 +86,11 @@ class RecipeIngredient(models.Model):
 class Ingredient(models.Model):
     name = models.CharField(
         verbose_name='Название',
-        max_length=MODEL_NAME_MAX_LEN,
+        max_length=CHARFIELD_MAX_LEN,
     )
     measurement_unit = models.CharField(
         verbose_name='Единица измерения',
-        max_length=MODEL_NAME_MAX_LEN
+        max_length=CHARFIELD_MAX_LEN
     )
 
     class Meta:
@@ -105,7 +108,7 @@ class Ingredient(models.Model):
 class Tag(models.Model):
     name = models.CharField(
         verbose_name='Название',
-        max_length=MODEL_NAME_MAX_LEN,
+        max_length=CHARFIELD_MAX_LEN,
         unique=True
     )
     color = ColorField(
@@ -115,7 +118,7 @@ class Tag(models.Model):
     )
     slug = models.SlugField(
         verbose_name='Slug категории',
-        max_length=MODEL_NAME_MAX_LEN,
+        max_length=CHARFIELD_MAX_LEN,
         unique=True,
         null=True
     )
@@ -143,7 +146,7 @@ class AbstractUserRecipeModel(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['user', 'recipe'],
-                                    name='recipes_allready_in_%(class)s'),
+                                    name='recipes_already_in_%(class)s'),
         ]
         abstract = True
 

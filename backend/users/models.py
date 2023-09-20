@@ -31,4 +31,4 @@ class Subscribe(models.Model):
         ]
 
     def __str__(self):
-        return f'{self.subscriber.username}: {self.subscribed.name}'
+        return f'{self.subscriber.username}: {self.subscribed.username}'

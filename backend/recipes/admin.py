@@ -49,7 +49,7 @@ class RecipesAdmin(admin.ModelAdmin):
     )
 
     def favorite_count(self, recipe):
-        return recipe.favorite.count()
+        return recipe.favorite_set.count()
 
 
 class ShoppingCartAdmin(admin.ModelAdmin):

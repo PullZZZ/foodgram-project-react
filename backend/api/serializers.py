@@ -14,7 +14,6 @@ from .validators import unique_in_list
 
 
 class UserSerializer(d_serializers.UserSerializer):
-    # is_subscribed = serializers.SerializerMethodField()
     is_subscribed = serializers.BooleanField(default=False)
 
     class Meta(d_serializers.UserSerializer.Meta):
@@ -51,14 +50,16 @@ class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         slug_field = 'slug'
-        fields = '__all__'
+        fields = ('id', 'name', 'color', 'slug')
+        read_only_fields = ('id', )
 
 
 class IngredientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ingredient
-        fields = '__all__'
+        fields = ('id', 'name', 'measurement_unit')
+        read_only_fields = ('id', )
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
@@ -188,8 +189,6 @@ class RecipesWriteSerialazer(serializers.ModelSerializer):
     @transaction.atomic
     def update(self, instance, validated_data):
         ingredients_data = validated_data.pop('ingredients')
-        # tags_data = validated_data.pop('tags')
-        # instance.tags.set(tags_data)
         self._add_ingredients_to_recipe(instance, ingredients_data)
         return super().update(instance, validated_data)
 
