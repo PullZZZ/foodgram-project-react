@@ -9,7 +9,6 @@ from rest_framework.validators import UniqueTogetherValidator
 
 from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 from users.models import Subscribe, User
-
 from .validators import unique_in_list
 
 
