@@ -68,10 +68,10 @@ class RecipesViewSet(viewsets.ModelViewSet):
         if user.is_authenticated:
             return (Recipe.objects.all().select_related('author')
                     .annotate(is_favorited=Exists(
-                        user.favorite.filter(recipe=OuterRef('pk'))
+                        user.favorite_set.filter(recipe=OuterRef('pk'))
                     ))
                     .annotate(is_in_shopping_cart=Exists(
-                        user.shoppingcart.filter(recipe=OuterRef('pk'))
+                        user.shoppingcart_set.filter(recipe=OuterRef('pk'))
                     ))
                     .prefetch_related('tags', 'ingredients')
                     )
@@ -100,7 +100,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
             serializer.save(user=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        deleted, _ = request.user.favorite.filter(
+        deleted, _ = request.user.favorite_set.filter(
             recipe=recipe
         ).delete()
         if not deleted:
@@ -117,7 +117,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
             serializer.save(user=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        deleted, _ = request.user.shoppingcart.filter(
+        deleted, _ = request.user.shoppingcart_set.filter(
             recipe=recipe
         ).delete()
         if not deleted:
@@ -131,7 +131,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     def download_shopping_cart(self, request):
         ingredients = (
             Recipe.ingredients.through.objects.filter(
-                recipe__shoppingcart__user=request.user)
+                recipe__shoppingcart_set__user=request.user)
             .values('ingredient__name',
                     'ingredient__measurement_unit')
             .annotate(amount=Sum('amount'))
