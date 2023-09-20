@@ -1,10 +1,12 @@
 import os
 from pathlib import Path
 
-from dotenv import load_dotenv
 
+DEV_LOCAL = True
 
-load_dotenv()
+if DEV_LOCAL:
+    from dotenv import load_dotenv
+    load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
