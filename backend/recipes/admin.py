@@ -6,6 +6,7 @@ from .models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                      ShoppingCart, Tag)
 
 
+@admin.register(Tag)
 class TagAdmin(ImportExportModelAdmin):
     list_display = (
         'id',
@@ -22,6 +23,7 @@ class IngredientResource(resources.ModelResource):
         model = Ingredient
 
 
+@admin.register(Ingredient)
 class IngredientAdmin(ImportExportModelAdmin):
     list_display = (
         'id',
@@ -38,6 +40,7 @@ class RecipeIngredientInline(admin.TabularInline):
     extra = 1
 
 
+@admin.register(Recipe)
 class RecipesAdmin(admin.ModelAdmin):
     inlines = (RecipeIngredientInline, )
     list_filter = ('name', 'author', 'tags')
@@ -52,6 +55,7 @@ class RecipesAdmin(admin.ModelAdmin):
         return recipe.favorite_set.count()
 
 
+@admin.register(ShoppingCart)
 class ShoppingCartAdmin(admin.ModelAdmin):
     list_display = (
         'user',
@@ -60,16 +64,10 @@ class ShoppingCartAdmin(admin.ModelAdmin):
     search_fields = ('name',)
 
 
+@admin.register(Favorite)
 class FavoriteAdmin(admin.ModelAdmin):
     list_display = (
         'user',
         'recipe'
     )
     search_fields = ('name',)
-
-
-admin.site.register(Tag, TagAdmin)
-admin.site.register(Ingredient, IngredientAdmin)
-admin.site.register(Recipe, RecipesAdmin)
-admin.site.register(ShoppingCart, ShoppingCartAdmin)
-admin.site.register(Favorite, FavoriteAdmin)

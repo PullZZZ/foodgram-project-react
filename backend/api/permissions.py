@@ -1,4 +1,5 @@
 from rest_framework import permissions
+from djoser.permissions import CurrentUserOrAdminOrReadOnly
 
 
 class AuthorOrAdminOrReadOnly(permissions.BasePermission):

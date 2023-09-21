@@ -3,7 +3,6 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from colorfield.fields import ColorField
 
-# from foodgram.settings import CHARFIELD_MAX_LEN
 from users.models import User
 from .validators import RecipeNameValidator
 
