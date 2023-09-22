@@ -86,6 +86,7 @@ jobs:
     name: Push nginx Docker image to DockerHub
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
+    needs: tests
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3

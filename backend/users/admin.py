@@ -36,6 +36,8 @@ class UserAdmin(BaseUserAdmin):
 
     def subscribers_count(self, user):
         return user.subscribeds.count()
+    subscribers_count.short_description = 'Подписчики'
 
     def recipes_count(self, user):
         return user.recipes.count()
+    recipes_count.short_description = 'Рецепты'
