@@ -8,7 +8,7 @@
 git clone git@github.com:PullZZZ/foodgram-project-react.git
 ```
 
-*Перейдите в директорию infra и создайте файл .env,
+*Перейдите в директорию foodgram-project-react и создайте файл .env,
 можно скопировать представленный там пример .env.example*
 
 ```
