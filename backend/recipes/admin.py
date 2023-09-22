@@ -37,7 +37,10 @@ class IngredientAdmin(ImportExportModelAdmin):
 
 class RecipeIngredientInline(admin.TabularInline):
     model = RecipeIngredient
-    extra = 1
+    extra = 0
+    min_num = 1
+    verbose_name = 'Ингредиенты'
+    verbose_name_plural = 'Ингредиенты'
 
 
 @admin.register(Recipe)
@@ -56,8 +59,8 @@ class RecipesAdmin(admin.ModelAdmin):
         return recipe.favorite_set.count()
 
     def ingredients_list(self, recipe):
-        print(recipe.ingredients.through.objects.all())
-        return recipe.ingredients.through.objects.all()
+        return ', '.join(
+            [ingredient.name for ingredient in recipe.ingredients.all()])
 
 
 @admin.register(ShoppingCart)

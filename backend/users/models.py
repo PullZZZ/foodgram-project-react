@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models.functions import Lower
@@ -5,12 +6,15 @@ from django.db.models.functions import Lower
 
 class User(AbstractUser):
     first_name = models.CharField('Имя',
-                                  max_length=150,
+                                  max_length=settings.USERSFIELD_MAX_LEN,
                                   blank=False)
-    last_name = models.CharField('Фамилия', max_length=150, blank=False)
+    last_name = models.CharField('Фамилия',
+                                 max_length=settings.USERSFIELD_MAX_LEN,
+                                 blank=False)
     email = models.EmailField('Адрес электронной почты',
                               unique=True,
-                              blank=False,)
+                              blank=False,
+                              max_length=settings.EMAIL_MAX_LEN)
 
     class Meta:
         db_table = 'auth_user'
@@ -22,6 +26,10 @@ class User(AbstractUser):
         ]
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
+        ordering = ('id', )
+
+    def __str__(self):
+        return self.username
 
 
 class Subscribe(models.Model):
