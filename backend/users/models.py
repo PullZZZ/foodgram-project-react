@@ -36,24 +36,29 @@ class Subscribe(models.Model):
     subscriber = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='subscribers'
+        related_name='subscribers',
+        verbose_name='Подписчик'
     )
     subscribed = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='subscribeds'
+        related_name='subscribeds',
+        verbose_name='Автор'
     )
 
     class Meta:
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
         constraints = [
-            models.UniqueConstraint(fields=['subscriber', 'subscribed'],
-                                    name='unique_subscribe'),
+            models.UniqueConstraint(
+                fields=['subscriber', 'subscribed'],
+                name='unique_subscribe'
+            ),
             models.CheckConstraint(
                 check=~models.Q(subscriber=models.F('subscribed')),
-                name='self_subscribe'
-            )
+                name='self_subscribe',
+                violation_error_message='Нельзя подписаться на самого себя'
+            ),
         ]
 
     def __str__(self):

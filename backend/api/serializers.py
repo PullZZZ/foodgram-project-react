@@ -212,11 +212,13 @@ class SubscribeCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Subscribe
-        fields = '__all__'
+        fields = ('subscriber', 'subscribed')
         validators = (
             UniqueTogetherValidator(
                 queryset=Subscribe.objects.all(),
-                fields=['subscriber', 'subscribed']),
+                fields=['subscriber', 'subscribed'],
+                message='Подписка уже оформлена'
+            ),
         )
 
     def validate_subscribed(self, subscribed):
@@ -246,7 +248,9 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
         validators = (
             UniqueTogetherValidator(
                 queryset=ShoppingCart.objects.all(),
-                fields=['user', 'recipe']),
+                fields=['user', 'recipe'],
+                message='Рецепт уже в корзине'
+            ),
         )
 
     def to_representation(self, instance):
@@ -269,7 +273,9 @@ class FavoriteSerializer(serializers.ModelSerializer):
         validators = (
             UniqueTogetherValidator(
                 queryset=Favorite.objects.all(),
-                fields=['user', 'recipe']),
+                fields=['user', 'recipe'],
+                message='Рецепт уже в избранном'
+            ),
         )
 
     def to_representation(self, instance):

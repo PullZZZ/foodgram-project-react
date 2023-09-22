@@ -57,10 +57,12 @@ class RecipesAdmin(admin.ModelAdmin):
 
     def favorite_count(self, recipe):
         return recipe.favorite_set.count()
+    favorite_count.short_description = 'В избранном'
 
     def ingredients_list(self, recipe):
         return ', '.join(
             [ingredient.name for ingredient in recipe.ingredients.all()])
+    ingredients_list.short_description = 'Ингредиенты'
 
 
 @admin.register(ShoppingCart)

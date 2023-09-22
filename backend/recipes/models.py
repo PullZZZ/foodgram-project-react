@@ -76,8 +76,12 @@ class RecipeIngredient(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['recipe', 'ingredient'],
-                                    name='unique_ingredient_in_recipe'),
+            models.UniqueConstraint(
+                fields=['recipe', 'ingredient'],
+                name='unique_ingredient_in_recipe',
+                violation_error_message=('Ингредиент может быть'
+                                         'добавлен в рецепт только один раз')
+            ),
         ]
 
     def __str__(self):
@@ -98,8 +102,12 @@ class Ingredient(models.Model):
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
         constraints = [
-            models.UniqueConstraint(fields=['name', 'measurement_unit'],
-                                    name='unique_ingredient_and_unit'),
+            models.UniqueConstraint(
+                fields=['name', 'measurement_unit'],
+                name='unique_ingredient_and_unit',
+                violation_error_message=('У ингредиента может быть только одна'
+                                         'единица измерения')
+            ),
         ]
 
     def __str__(self):
