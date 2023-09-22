@@ -128,8 +128,7 @@ class Tag(models.Model):
     slug = models.SlugField(
         verbose_name='Slug категории',
         max_length=settings.CHARFIELD_MAX_LEN,
-        unique=True,
-        null=True
+        unique=True
     )
 
     class Meta:
