@@ -2,6 +2,8 @@ import os
 from pathlib import Path
 
 
+AUTH_USER_MODEL = 'users.User'
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY')
@@ -126,3 +128,8 @@ DJOSER = {
 }
 
 CHARFIELD_MAX_LEN = 200
+USERSFIELD_MAX_LEN = 150
+EMAIL_MAX_LEN = 254
+MIN_VALUE = 1
+MAX_VALUE = 10000
+PAGE_SIZE = 6

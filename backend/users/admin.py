@@ -13,6 +13,7 @@ class SubscribeAdmin(admin.ModelAdmin):
     search_fields = ('subscriber', 'subscribed')
 
 
+@admin.register(User)
 class UserAdmin(BaseUserAdmin):
     list_display = BaseUserAdmin.list_display + ('subscribers_count',
                                                  'recipes_count')
@@ -38,7 +39,3 @@ class UserAdmin(BaseUserAdmin):
 
     def recipes_count(self, user):
         return user.recipes.count()
-
-
-admin.site.unregister(User)
-admin.site.register(User, UserAdmin)

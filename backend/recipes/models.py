@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from colorfield.fields import ColorField
 
@@ -26,9 +26,10 @@ class Recipe (models.Model):
         upload_to='recipes/images/',
         verbose_name='Фото'
     )
-    cooking_time = models.PositiveIntegerField(
+    cooking_time = models.PositiveSmallIntegerField(
         verbose_name='Время приготовления (в минутах)',
-        validators=[MinValueValidator(1)]
+        validators=[MinValueValidator(settings.MIN_VALUE),
+                    MaxValueValidator(settings.MAX_VALUE)]
     )
     ingredients = models.ManyToManyField(
         'Ingredient',
@@ -67,9 +68,10 @@ class RecipeIngredient(models.Model):
         on_delete=models.CASCADE,
         verbose_name='Ингредиент'
     )
-    amount = models.IntegerField(
+    amount = models.PositiveSmallIntegerField(
         verbose_name='Количество',
-        validators=[MinValueValidator(1)]
+        validators=[MinValueValidator(settings.MIN_VALUE),
+                    MaxValueValidator(settings.MAX_VALUE)]
     )
 
     class Meta:
