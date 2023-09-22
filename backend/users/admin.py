@@ -16,6 +16,22 @@ class SubscribeAdmin(admin.ModelAdmin):
 class UserAdmin(BaseUserAdmin):
     list_display = BaseUserAdmin.list_display + ('subscribers_count',
                                                  'recipes_count')
+    add_fieldsets = (
+        (
+            None,
+            {
+                'classes': ('wide',),
+                'fields': (
+                    'username',
+                    'email',
+                    'first_name',
+                    'last_name',
+                    'password1',
+                    'password2'
+                ),
+            },
+        ),
+    )
 
     def subscribers_count(self, user):
         return user.subscribeds.count()

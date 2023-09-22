@@ -26,10 +26,6 @@ class UserSerializer(d_serializers.UserSerializer):
 
 class UserCreateSerializer(d_serializers.UserCreateSerializer):
 
-    first_name = serializers.CharField()
-    last_name = serializers.CharField()
-    email = serializers.EmailField()
-
     class Meta(d_serializers.UserCreateSerializer.Meta):
         fields = (
             'email',
