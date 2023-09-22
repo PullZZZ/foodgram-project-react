@@ -1,13 +1,27 @@
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models.functions import Lower
 
 
-User = get_user_model()
-User._meta.get_field('email')._unique = True
-User._meta.get_field('email').blank = False
-User._meta.get_field('first_name').blank = False
-User._meta.get_field('last_name').blank = False
+class User(AbstractUser):
+    first_name = models.CharField('Имя',
+                                  max_length=150,
+                                  blank=False)
+    last_name = models.CharField('Фамилия', max_length=150, blank=False)
+    email = models.EmailField('Адрес электронной почты',
+                              unique=True,
+                              blank=False,)
+
+    class Meta:
+        db_table = 'auth_user'
+        constraints = [
+            models.UniqueConstraint(
+                Lower('username'),
+                name='unique_username'
+            ),
+        ]
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
 
 
 class Subscribe(models.Model):
