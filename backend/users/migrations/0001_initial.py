@@ -13,10 +13,6 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-        ('auth', '0015_alter_user_email_alter_user_first_name_and_more'),
-    ]
-
     operations = [
         migrations.CreateModel(
             name='User',

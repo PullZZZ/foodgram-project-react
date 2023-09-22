@@ -47,12 +47,17 @@ class RecipesAdmin(admin.ModelAdmin):
     list_display = (
         'author',
         'name',
+        'ingredients_list',
         'text',
         'favorite_count'
     )
 
     def favorite_count(self, recipe):
         return recipe.favorite_set.count()
+
+    def ingredients_list(self, recipe):
+        print(recipe.ingredients.through.objects.all())
+        return recipe.ingredients.through.objects.all()
 
 
 @admin.register(ShoppingCart)
