@@ -1,8 +1,6 @@
-import base64
-
-from django.core.files.base import ContentFile
 from django.db import transaction
 from djoser import serializers as d_serializers
+from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.validators import UniqueTogetherValidator
@@ -27,10 +25,6 @@ class UserSerializer(d_serializers.UserSerializer):
 
 
 class UserCreateSerializer(d_serializers.UserCreateSerializer):
-
-    first_name = serializers.CharField()
-    last_name = serializers.CharField()
-    email = serializers.EmailField()
 
     class Meta(d_serializers.UserCreateSerializer.Meta):
         fields = (
@@ -76,16 +70,6 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
             'measurement_unit',
             'amount'
         )
-
-
-class Base64ImageField(serializers.ImageField):
-    def to_internal_value(self, data):
-        if isinstance(data, str) and data.startswith('data:image'):
-            format, imgstr = data.split(';base64,')
-            ext = format.split('/')[-1]
-            data = ContentFile(base64.b64decode(imgstr), name='recipe.' + ext)
-
-        return super().to_internal_value(data)
 
 
 class RecipesShortSerialazer(serializers.ModelSerializer):
@@ -258,7 +242,7 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ShoppingCart
-        fields = '__all__'
+        fields = ('user', 'recipe')
         validators = (
             UniqueTogetherValidator(
                 queryset=ShoppingCart.objects.all(),
@@ -281,7 +265,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Favorite
-        fields = '__all__'
+        fields = ('user', 'recipe')
         validators = (
             UniqueTogetherValidator(
                 queryset=Favorite.objects.all(),

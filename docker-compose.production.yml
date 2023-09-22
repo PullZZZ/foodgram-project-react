@@ -15,7 +15,7 @@ services:
     image: pullzzz/foodgram_backend
     env_file: ./.env
     volumes:
-      - ../data/:/app/data
+      - ./data/:/app/data
       - static:/backend_static
       - media:/app/media
     depends_on:
@@ -25,12 +25,11 @@ services:
     volumes:
       - static:/app/result_build/build/
   nginx:
-    image: nginx:1.22.1
+    image: pullzzz/foodgram_nginx
     ports:
-      - "9001:80"
+      - "9002:80"
     volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
-      - ../docs/:/var/www/html/api/docs/
+      - ./docs/:/var/www/html/api/docs/
       - static:/var/www/html/
       - media:/var/www/media/
     depends_on:

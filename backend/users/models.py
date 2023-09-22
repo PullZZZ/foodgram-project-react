@@ -1,9 +1,13 @@
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 
 User = get_user_model()
 User._meta.get_field('email')._unique = True
+User._meta.get_field('email').blank = False
+User._meta.get_field('first_name').blank = False
+User._meta.get_field('last_name').blank = False
 
 
 class Subscribe(models.Model):
