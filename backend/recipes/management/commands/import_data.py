@@ -1,10 +1,19 @@
 import csv
 import json
+import logging
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from recipes.models import Ingredient, Tag
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s, %(levelname)s, %(message)s',
+)
+
+logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
@@ -48,16 +57,20 @@ class Command(BaseCommand):
             nargs='?',
             choices=['json', 'csv'],
             default='json',
-            help='Выбор типа ипрортируемого файла: csv или json'
+            help=('Выбор типа ипрортируемого файла: csv или json'
+                  '(по умолчанию json)')
         )
 
     def _import_data(self, model, filepath, file_type):
-        print(f'Импорт {filepath} начался')
-        with open(filepath, 'r') as data_file:
-            data = []
-            if file_type == 'csv':
-                data = csv.DictReader(data_file)
-            else:
-                data = json.load(data_file)
-            model.objects.bulk_create(model(**line) for line in data)
-        print(f'Данные из {filepath} загружены')
+        logger.info(f'Импорт {filepath} начался')
+        try:
+            with open(filepath, 'r') as data_file:
+                data = []
+                if file_type == 'csv':
+                    data = csv.DictReader(data_file)
+                else:
+                    data = json.load(data_file)
+                model.objects.bulk_create(model(**line) for line in data)
+            logger.info(f'Данные из {filepath} загружены')
+        except Exception as error:
+            logger.error(error)
