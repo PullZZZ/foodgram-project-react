@@ -146,7 +146,7 @@ jobs:
           echo DJANGO_ALLOWED_HOSTS=\'${{ vars.DJANGO_ALLOWED_HOSTS }}\' >> .env
           echo CSRF_TRUSTED_ORIGINS=\'${{ vars.CSRF_TRUSTED_ORIGINS }}\' >> .env
           sudo docker compose -f docker-compose.production.yml up -d
-          sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
+          # sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
           sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic
           sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/collected_static/. /backend_static/static/ 
   send_message:
